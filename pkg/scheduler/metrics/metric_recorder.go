@@ -70,3 +70,12 @@ func (r *PendingPodsRecorder) Dec() {
 func (r *PendingPodsRecorder) Clear() {
 	r.recorder.Set(float64(0))
 }
+
+// nopRecorder is an implementation of MetricRecorder, but do nothing
+type nopRecorder struct{}
+
+// NewNopRecorder returns no-op MetricRecorder
+func NewNopRecorder() MetricRecorder { return nopRecorder{} }
+func (n nopRecorder) Inc()           {}
+func (n nopRecorder) Dec()           {}
+func (n nopRecorder) Clear()         {}

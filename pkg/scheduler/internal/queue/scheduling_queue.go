@@ -806,15 +806,15 @@ type UnschedulablePods struct {
 	// podInfoMap is a map key by a pod's full-name and the value is a pointer to the QueuedPodInfo.
 	podInfoMap map[string]*framework.QueuedPodInfo
 	keyFunc    func(*v1.Pod) string
-	// metricRecorder updates the counter when elements of an unschedulablePodsMap
-	// get added or removed, and it does nothing if it's nil
+	// metricRecorder updates the counter when elements of
+	// an unschedulablePodsMap get added or removed
 	metricRecorder metrics.MetricRecorder
 }
 
 // Add adds a pod to the unschedulable podInfoMap.
 func (u *UnschedulablePods) addOrUpdate(pInfo *framework.QueuedPodInfo) {
 	podID := u.keyFunc(pInfo.Pod)
-	if _, exists := u.podInfoMap[podID]; !exists && u.metricRecorder != nil {
+	if _, exists := u.podInfoMap[podID]; !exists {
 		u.metricRecorder.Inc()
 	}
 	u.podInfoMap[podID] = pInfo
@@ -823,7 +823,7 @@ func (u *UnschedulablePods) addOrUpdate(pInfo *framework.QueuedPodInfo) {
 // Delete deletes a pod from the unschedulable podInfoMap.
 func (u *UnschedulablePods) delete(pod *v1.Pod) {
 	podID := u.keyFunc(pod)
-	if _, exists := u.podInfoMap[podID]; exists && u.metricRecorder != nil {
+	if _, exists := u.podInfoMap[podID]; exists {
 		u.metricRecorder.Dec()
 	}
 	delete(u.podInfoMap, podID)
@@ -842,13 +842,15 @@ func (u *UnschedulablePods) get(pod *v1.Pod) *framework.QueuedPodInfo {
 // Clear removes all the entries from the unschedulable podInfoMap.
 func (u *UnschedulablePods) clear() {
 	u.podInfoMap = make(map[string]*framework.QueuedPodInfo)
-	if u.metricRecorder != nil {
-		u.metricRecorder.Clear()
-	}
+	u.metricRecorder.Clear()
 }
 
 // newUnschedulablePods initializes a new object of UnschedulablePods.
 func newUnschedulablePods(metricRecorder metrics.MetricRecorder) *UnschedulablePods {
+	if metricRecorder == nil {
+		metricRecorder = metrics.NewNopRecorder()
+	}
+
 	return &UnschedulablePods{
 		podInfoMap:     make(map[string]*framework.QueuedPodInfo),
 		keyFunc:        util.GetPodFullName,
